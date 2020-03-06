@@ -25,7 +25,7 @@
     <vertical-scrollbar
       v-if="isReady && scrollY"
       :color="scrollbarColor"
-      :always-show="alwaysShow"
+      :y-bar-display="yBarDisplay"
       :size="size"
       :border-radius="borderRadius"
       :offset="offset"
@@ -41,7 +41,7 @@
     <horizontal-scrollbar
       v-if="isReady && scrollX"
       :color="scrollbarColor"
-      :always-show="alwaysShow"
+      :x-bar-display="xBarDisplay"
       :size="size"
       :border-radius="borderRadius"
       :offset="offset"
@@ -54,6 +54,7 @@
       ref="hscroll"
     >
     </horizontal-scrollbar>
+    <resize-detector @resize="onResize"></resize-detector>
   </div>
 </template>
 
@@ -84,9 +85,10 @@ export default {
   props: {
     step: { type: Number, default: 50 }, // 鼠标滚动一次，视图对应的位移值
     scrollbarColor: { type: String, default: '#DFDFDF' }, // 滚动条颜色
-    alwaysShow: { type: Boolean, default: false }, // 是否一直显示滚动条。默认鼠标进入视图区才显示，离开后隐藏
     scrollX: { type: Boolean, default: true }, // 是否启用水平方向滚动
     scrollY: { type: Boolean, default: true }, // 是否启用垂直方向滚动
+    xBarDisplay: { type: String, default: 'hover' }, // 水平方向滚动条显示时机：hover show hidden
+    yBarDisplay: { type: String, default: 'hover' }, // 垂直方向滚动条显示时机：hover show hidden
     size: { type: Number, default: 6 }, //垂直滚动条宽度，水平滚动条高度
     borderRadius: { type: Number, default: 4 }, // 滚动条圆角
     offset: { type: Number, default: 0 } // 滚动条向内偏移量
@@ -95,10 +97,10 @@ export default {
     this.scrollWrapper = this.$refs.scrollWrapper
     this.scrollViewer = this.$refs.scrollViewer
     this.calculateSize()
-    window.addEventListener('resize', this.calculateSize)
+    window.addEventListener('resize', this.onResize)
   },
   beforeDestroy () {
-    window.removeEventListener('resize', this.calculateSize)
+    window.removeEventListener('resize', this.onResize)
     this.scrollWrapper = null
     this.scrollViewer = null
   },
@@ -135,6 +137,20 @@ export default {
         
         canScrollY ? this.normalizeVertical(this.top) : this.top = 0
         canScrollX ? this.normalizeHorizontal(this.left) : this.left = 0
+
+        if (canScrollY) {
+          this.normalizeVertical(this.top)
+        } else {
+          this.top = 0
+          this.$emit('scroll-y', { top: true, bottom: false, value: 0 })
+        }
+
+        if (canScrollX) {
+          this.normalizeHorizontal(this.left)
+        } else {
+          this.left = 0
+          this.$emit('scroll-x', { left: true, right: false, value: 0 })
+        }
       })
     },
     // 鼠标移入滚动区
@@ -177,12 +193,14 @@ export default {
       const size = this.getSize()
       const outOfViewHeight = size.viewerHeight - size.wrapperHeight
 
-      const maxBottom = next >= outOfViewHeight
+      const maxBottom = next >= (outOfViewHeight - 2)
       if (maxBottom) next = outOfViewHeight
-      const maxTop = next <= 0
+      const maxTop = next <= 2
       if (maxTop) next = 0
 
-      const shouldScroll = this.top !== next
+      // 去抖动
+      const shouldScroll = Math.abs(this.top - next) > 2
+
       this.allowBodyScroll = !shouldScroll
       if (shouldScroll) {
         this.top = next
@@ -191,18 +209,22 @@ export default {
         if (maxTop || maxBottom) {
           this.$emit('scroll-max', { top: maxTop, bottom: maxBottom, right: false, left: false })
         }
+
+        this.$emit('scroll-y', { top: maxTop, bottom: maxBottom, value: next })
       }
     },
     normalizeHorizontal (next) {
       const size = this.getSize()
       const outOfViewWidth = size.viewerWidth - this.wrapperWidth
 
-      const maxRight = next >= outOfViewWidth
+      const maxRight = next >= (outOfViewWidth - 2)
       if(maxRight) next = outOfViewWidth
-      const maxLeft = next <= 0
-      if(next < 0) next = 0
+      const maxLeft = next <= 2
+      if(maxLeft) next = 0
 
-      const shouldScroll = this.left !== next
+      // 2px裕量，用于去抖动
+      const shouldScroll = Math.abs(this.left - next) > 2
+
       this.allowBodyScroll = !shouldScroll
       if (shouldScroll) {
         this.left = next,
@@ -211,6 +233,8 @@ export default {
         if (maxRight || maxLeft) {
           this.$emit('scroll-max', { right: maxRight, left: maxLeft, top: false, bottom: false })
         }
+
+        this.$emit('scroll-x', { right: maxRight, left: maxLeft, value: next })
       }
     },
     // 滚动条位置改变。movement：改变后的位置百分比。orientation：方向
@@ -232,6 +256,14 @@ export default {
     },
     // 获取wrapper和viewer的高度/宽度
     getSize () {
+      if (!this.scrollViewer || !this.scrollWrapper) {
+        return {
+          viewerHeight: null,
+          viewerWidth: null,
+          wrapperHeight: null,
+          wrapperWidth: null
+        }
+      }
       return {
         viewerHeight: this.scrollViewer.clientHeight,
         viewerWidth: this.scrollViewer.clientWidth,
@@ -253,6 +285,13 @@ export default {
         this.viewerWidth = size.viewerWidth
         this.wrapperHeight = size.wrapperHeight
         this.wrapperWidth = size.wrapperWidth
+
+        this.$emit('size', {
+          viewerHeight: this.viewerHeight,
+          viewerWidth: this.viewerWidth,
+          wrapperHeight: this.wrapperHeight,
+          wrapperWidth: this.wrapperWidth
+        })
 
         this.isReady = true
         return cb ? cb() : false
