@@ -11,11 +11,14 @@
       :offset="0"
       @scroll-max="onMax"
     >
-       <div class="inner1">
-         <div class="inner1-1"><span>Left</span></div>
-         <div class="inner1-2"><span>Right</span></div>
-       </div>
-       <div class="inner2"><span>Bottom</span></div>
+      <div class="inner1">
+        <div class="inner1-1"><span>Left</span></div>
+        <div class="inner1-2"><span>Right</span></div>
+      </div>
+      <div class="inner2">
+        <span>Middle</span>
+      </div>
+      <div class="inner3"></div>
      </vue-scrollbar>
     </div>
   </div>
@@ -75,4 +78,10 @@ export default {
   align-items: center;
   justify-content: center;
 }
+
+.inner3{
+  height: 400px;
+  background-color: #333;
+}
+
 </style>

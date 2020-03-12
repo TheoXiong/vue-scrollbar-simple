@@ -313,11 +313,12 @@ export default {
   position: relative;
 }
 .vue-scroll-view{
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
   box-sizing: border-box;
   min-height: 100%;
   min-width: 100%;
-  display: inline-block;
 }
 .vue-scroll-view.disable-scroll-x{
   width: 100%;
