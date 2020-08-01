@@ -16,11 +16,13 @@
         :style="{ 
           height: height + '%', 
           top: scrolling + '%',
-          backgroundColor: color,
+          backgroundColor: hovering ? hoverColor : color,
           width: scrollbarSize + 'px',
           borderRadius: scrollbarBorderRadius + 'px'
         }"
         @mousedown="startDrag"
+        @mouseenter="hovering = true"
+        @mouseleave="hovering = false"
         ref="scrollbar"
       >
       </div>
@@ -38,6 +40,7 @@ export default {
     return  {
       height: 0,
       opacity: 0,
+      hovering: false,
       dragging: false,
       start: 0
     }
@@ -47,6 +50,7 @@ export default {
     wrapperHeight: Number, // 包装层（可视区）高度
     viewerHeight: Number, // 视图高度
     color: { type: String, default: '#DFDFDF' },
+    hoverColor: { type: String, default: '#DFDFDF' },
     yBarDisplay: { type: String, default: 'hover' },
     size: { type: Number, default: 6 },
     borderRadius: { type: Number, default: 4 },

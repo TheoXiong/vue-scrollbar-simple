@@ -25,6 +25,7 @@
     <vertical-scrollbar
       v-if="isReady && scrollY"
       :color="scrollbarColor"
+      :hover-color="scrollbarHoverColor"
       :y-bar-display="yBarDisplay"
       :size="size"
       :border-radius="borderRadius"
@@ -41,6 +42,7 @@
     <horizontal-scrollbar
       v-if="isReady && scrollX"
       :color="scrollbarColor"
+      :hover-color="scrollbarHoverColor"
       :x-bar-display="xBarDisplay"
       :size="size"
       :border-radius="borderRadius"
@@ -85,6 +87,7 @@ export default {
   props: {
     step: { type: Number, default: 50 }, // 鼠标滚动一次，视图对应的位移值
     scrollbarColor: { type: String, default: '#DFDFDF' }, // 滚动条颜色
+    scrollbarHoverColor: { type: String, default: '#DFDFDF' }, // 滚动条hover颜色
     scrollX: { type: Boolean, default: true }, // 是否启用水平方向滚动
     scrollY: { type: Boolean, default: true }, // 是否启用垂直方向滚动
     xBarDisplay: { type: String, default: 'hover' }, // 水平方向滚动条显示时机：hover show hidden

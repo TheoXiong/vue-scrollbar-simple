@@ -3,9 +3,10 @@
     <div class="outer">
      <vue-scrollbar 
       ref="scrollbar"
-      :alwaysShow="true"
       :scrollX="true"
       :scrollY="true"
+      scrollbarColor="rgba(191,191,191,0.45)"
+      scrollbarHoverColor="rgba(191,191,191,1)"
       :size="8"
       :border-radius="0"
       :offset="0"
