@@ -325,10 +325,10 @@ export default {
 }
 .vue-scroll-view.disable-scroll-x{
   width: 100%;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 .vue-scroll-view.disable-scroll-y{
   height: 100%;
-  overflow-y: hidden;
+  overflow: hidden;
 }
 </style>

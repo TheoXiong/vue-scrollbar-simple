@@ -1,6 +1,6 @@
 {
   "name": "vue-scrollbar-simple",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "A vue component of scrollbar",
   "main": "dist/index.min.js",
   "scripts": {
