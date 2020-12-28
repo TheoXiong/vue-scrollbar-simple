@@ -64,6 +64,7 @@
 import VerticalScrollbar from './VerticalScrollbar.vue'
 import HorizontalScrollbar from './HorizontalScrollbar.vue'
 import ResizeDetector from './ResizeDetector.vue'
+const throttle = require('lodash.throttle')
 
 export default {
   name: 'VueScrollbar',
@@ -85,16 +86,25 @@ export default {
     }
   },
   props: {
-    step: { type: Number, default: 50 }, // 鼠标滚动一次，视图对应的位移值
-    scrollbarColor: { type: String, default: '#DFDFDF' }, // 滚动条颜色
-    scrollbarHoverColor: { type: String, default: '#DFDFDF' }, // 滚动条hover颜色
+    step: { type: Number, default: 30 }, // 鼠标滚动一次，视图对应的位移值
+    scrollbarColor: { type: String, default: 'rgba(191,191,191,0.45)' }, // 滚动条颜色
+    scrollbarHoverColor: { type: String, default: 'rgba(191,191,191,1)' }, // 滚动条hover颜色
     scrollX: { type: Boolean, default: true }, // 是否启用水平方向滚动
     scrollY: { type: Boolean, default: true }, // 是否启用垂直方向滚动
     xBarDisplay: { type: String, default: 'hover' }, // 水平方向滚动条显示时机：hover show hidden
     yBarDisplay: { type: String, default: 'hover' }, // 垂直方向滚动条显示时机：hover show hidden
     size: { type: Number, default: 6 }, //垂直滚动条宽度，水平滚动条高度
     borderRadius: { type: Number, default: 4 }, // 滚动条圆角
-    offset: { type: Number, default: 0 } // 滚动条向内偏移量
+    offset: { type: Number, default: 0 }, // 滚动条向内偏移量
+    delay: { type: Number, default: 150 } // 滚轮事件执行的（截流）延时
+  },
+  created () {
+    this.justScrollY = throttle((...args) => {
+      this.handleScrollY(...args)
+    }, this.delay)
+    this.justScrollX = throttle((...args) => {
+      this.handleScrollX(...args)
+    }, this.delay)    
   },
   mounted () {
     this.scrollWrapper = this.$refs.scrollWrapper
@@ -123,17 +133,23 @@ export default {
         let canScrollY = this.viewerHeight > this.wrapperHeight
         let canScrollX = this.viewerWidth > this.wrapperWidth
 
-        this.allowBodyScroll = true
-        if (canScrollY && !shifted) this.normalizeVertical(nextY)
-        if (shifted && canScrollX) this.normalizeHorizontal(nextX)
+        let allowBodyScroll = false
+        if (canScrollY && !shifted && e.deltaX == 0) {
+          allowBodyScroll = this.normalizeVertical(nextY)
+        }
+        if (canScrollX && ((shifted && e.deltaX == 0) || (!shifted && e.deltaX != 0 && e.deltaY == 0))) {
+          allowBodyScroll = this.normalizeHorizontal(nextX)
+        }
 
-        if (!this.allowBodyScroll) {
+        if (!allowBodyScroll) {
           e.preventDefault()
           e.stopPropagation()
         }
       })
     },
     onResize () {
+      this.$emit('resize')
+
       this.calculateSize(() => {
         let canScrollY = this.viewerHeight > this.wrapperHeight
         let canScrollX = this.viewerWidth > this.wrapperWidth
@@ -203,18 +219,22 @@ export default {
 
       // 去抖动
       const shouldScroll = Math.abs(this.top - next) > 2
+      const allowBodyScroll = !shouldScroll
 
-      this.allowBodyScroll = !shouldScroll
       if (shouldScroll) {
-        this.top = next
-        this.vMovement = next / size.viewerHeight * 100
-
-        if (maxTop || maxBottom) {
-          this.$emit('scroll-max', { top: maxTop, bottom: maxBottom, right: false, left: false })
-        }
-
-        this.$emit('scroll-y', { top: maxTop, bottom: maxBottom, value: next })
+        this.justScrollY(next, size, maxTop, maxBottom)
       }
+
+      return allowBodyScroll
+    },
+    handleScrollY (next, size, maxTop, maxBottom) {
+      this.top = next
+      this.vMovement = next / size.viewerHeight * 100
+
+      if (maxTop || maxBottom) {
+        this.$emit('scroll-max', { top: maxTop, bottom: maxBottom, right: false, left: false })
+      }
+      this.$emit('scroll-y', { top: maxTop, bottom: maxBottom, value: next })
     },
     normalizeHorizontal (next) {
       const size = this.getSize()
@@ -227,18 +247,22 @@ export default {
 
       // 2px裕量，用于去抖动
       const shouldScroll = Math.abs(this.left - next) > 2
+      const allowBodyScroll = !shouldScroll
 
-      this.allowBodyScroll = !shouldScroll
       if (shouldScroll) {
-        this.left = next,
-        this.hMovement = next / size.viewerWidth * 100
-
-        if (maxRight || maxLeft) {
-          this.$emit('scroll-max', { right: maxRight, left: maxLeft, top: false, bottom: false })
-        }
-
-        this.$emit('scroll-x', { right: maxRight, left: maxLeft, value: next })
+        this.justScrollX(next, size, maxLeft, maxRight)
       }
+
+      return allowBodyScroll
+    },
+    handleScrollX (next, size, maxLeft, maxRight) {
+      this.left = next
+      this.hMovement = next / size.viewerWidth * 100
+
+      if (maxRight || maxLeft) {
+        this.$emit('scroll-max', { right: maxRight, left: maxLeft, top: false, bottom: false })
+      }
+      this.$emit('scroll-x', { right: maxRight, left: maxLeft, value: next })
     },
     // 滚动条位置改变。movement：改变后的位置百分比。orientation：方向
     // 根据新的位置百分比，计算viewer视图的偏移量（marginTop/marginLeft）
@@ -320,7 +344,7 @@ export default {
   top: 0;
   left: 0;
   box-sizing: border-box;
-  min-height: 100%;
+  /* min-height: 100%; */
   min-width: 100%;
 }
 .vue-scroll-view.disable-scroll-x{

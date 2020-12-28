@@ -183,6 +183,7 @@ export default {
   width: 100%;
   left: 0;
   background: transparent;
+  z-index: 9999;
 }
 .vue-scrollbar-horizontal .scrollbar-inner{
   position: relative;
