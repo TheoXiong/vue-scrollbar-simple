@@ -82,7 +82,7 @@ export default {
       vMovement: 0,
       hMovement: 0,
       dragging: false,
-      allowBodyScroll: false,
+      allowBodyScroll: true,
     }
   },
   props: {
@@ -133,7 +133,7 @@ export default {
         let canScrollY = this.viewerHeight > this.wrapperHeight
         let canScrollX = this.viewerWidth > this.wrapperWidth
 
-        let allowBodyScroll = false
+        let allowBodyScroll = true
         if (canScrollY && !shifted && e.deltaX == 0) {
           allowBodyScroll = this.normalizeVertical(nextY)
         }

@@ -2,9 +2,9 @@ import Vue from 'vue'
 import App from './App.vue'
 
 // dev
-import VueScrollbar from '../../src/index.js'
+// import VueScrollbar from '../../src/index.js'
 // prod
-// import VueScrollbar from '../../'
+import VueScrollbar from '../../'
 
 Vue.use(VueScrollbar)
 
